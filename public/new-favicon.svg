@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document background -->
+  <rect x="4" y="2" width="24" height="28" rx="2" fill="#6366F1" />
+  
+  <!-- Document lines -->
+  <rect x="8" y="8" width="16" height="2" rx="1" fill="white" />
+  <rect x="8" y="12" width="16" height="2" rx="1" fill="white" />
+  <rect x="8" y="16" width="10" height="2" rx="1" fill="white" />
+  
+  <!-- Star/rating symbol -->
+  <path d="M22 24L24.2 19.8L28 18.4L25 15.2L25.6 11.2L22 12.8L18.4 11.2L19 15.2L16 18.4L19.8 19.8L22 24Z" fill="#FBBF24" />
+</svg>

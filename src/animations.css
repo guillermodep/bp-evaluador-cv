@@ -1,0 +1,57 @@
+/* Animaciones personalizadas para elementos decorativos */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-10px) translateX(5px);
+  }
+}
+
+@keyframes float-medium {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(-15px) translateX(-8px);
+  }
+}
+
+@keyframes float-fast {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(10px) translateX(10px);
+  }
+}
+
+.float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.float-medium {
+  animation: float-medium 12s ease-in-out infinite;
+}
+
+.float-fast {
+  animation: float-fast 6s ease-in-out infinite;
+}
+
+.pulse-subtle {
+  animation: pulse 6s ease-in-out infinite;
+}
+
+/* Animación para el icono flotante */
+@keyframes gentle-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.gentle-bounce {
+  animation: gentle-bounce 3s ease-in-out infinite;
+}

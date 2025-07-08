@@ -61,7 +61,7 @@ const Login = () => {
     // Simulamos un pequeño retraso para la animación de carga
     setTimeout(() => {
       // Simple client-side validation
-      if (username === 'admin' && password === 'smartsolutions') {
+            if (username === 'admin' && password === 'bancopichincha') {
         // Store authentication state in localStorage
         localStorage.setItem('isAuthenticated', 'true');
         setFormState('success');

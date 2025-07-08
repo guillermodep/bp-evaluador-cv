@@ -1,21 +1,52 @@
 import React, { useState } from 'react';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { cva, type VariantProps } from 'class-variance-authority';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from "@/components/ui/progress";
-import { FileDown, FileText, Lightbulb, Star } from "lucide-react";
+import { Lightbulb, Star, Award, Medal, Check } from "lucide-react";
 import { Candidate } from '@/utils/evaluationUtils';
 import CandidateDetail from './CandidateDetail';
-import { exportToPDF } from '@/utils/pdfExport';
-import { exportToCSV } from '@/utils/csvExport';
-import { exportToATSMarkdown } from '@/utils/atsExport';
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from '@/lib/utils';
 
-interface CandidateRankingProps {
+const cardVariants = cva(
+  "p-4 rounded-lg transition-all duration-300 ease-in-out relative cursor-pointer border-2",
+  {
+    variants: {
+      variant: {
+        default: "bg-card border-border hover:border-primary/50 hover:shadow-md",
+        top: "bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-100 dark:from-yellow-900/20 dark:via-amber-900/20 dark:to-yellow-800/20 border-yellow-400/80",
+        second: "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/20 dark:to-slate-700/20 border-slate-300/80",
+        third: "bg-gradient-to-br from-orange-50 to-amber-100 dark:from-orange-900/20 dark:to-amber-800/20 border-orange-300/70",
+      },
+      selected: {
+        true: "ring-2 ring-offset-2 ring-primary shadow-xl scale-[1.02]",
+        false: "",
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      selected: false,
+    },
+  }
+);
+
+interface CandidateRankingProps extends VariantProps<typeof cardVariants> {
   candidates: Candidate[];
   selectedFileNames: string[];
   onToggleSelection: (fileName: string) => void;
 }
+
+const RankingIcon = ({ rank }: { rank: number }) => {
+  if (rank === 0) return <Award className="h-7 w-7 text-yellow-500 fill-yellow-400" />;
+  if (rank === 1) return <Medal className="h-7 w-7 text-slate-500 fill-slate-400" />;
+  if (rank === 2) return <Star className="h-7 w-7 text-orange-500 fill-orange-400" />;
+  return (
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground font-bold text-sm">
+      {rank + 1}
+    </span>
+  );
+};
 
 const CandidateRanking = ({ candidates, selectedFileNames, onToggleSelection }: CandidateRankingProps) => {
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<Candidate | null>(null);
@@ -24,9 +55,7 @@ const CandidateRanking = ({ candidates, selectedFileNames, onToggleSelection }: 
   const handleCandidateClick = (candidate: Candidate, e?: React.MouseEvent<HTMLDivElement>) => {
     if (e) {
       const target = e.target as HTMLElement;
-      if (target.closest('[data-no-detail-click="true"]')) {
-        return;
-      }
+      if (target.closest('[data-no-detail-click="true"]')) return;
     }
     setSelectedCandidateDetail(candidate);
     setIsDetailOpen(true);
@@ -40,8 +69,8 @@ const CandidateRanking = ({ candidates, selectedFileNames, onToggleSelection }: 
   if (candidates.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-gray-500">No hay candidatos para mostrar en el ranking.</p>
-        <p className="text-sm text-gray-400 mt-2">Intenta cargar algunos CVs o ajusta tus filtros.</p>
+        <p className="text-muted-foreground">No hay candidatos para mostrar en el ranking.</p>
+        <p className="text-sm text-muted-foreground/80 mt-2">Intenta cargar algunos CVs o ajusta tus filtros.</p>
       </div>
     );
   }
@@ -49,109 +78,82 @@ const CandidateRanking = ({ candidates, selectedFileNames, onToggleSelection }: 
   const sortedCandidates = [...candidates].sort((a, b) => b.score - a.score);
 
   return (
-    <Card className="shadow-none border-none bg-transparent">
-      <div className="space-y-4">
-        {sortedCandidates.map((candidate, index) => (
-          <div
-            key={candidate.fileName}
-            className={`p-4 rounded-lg transition-all duration-200 ease-in-out relative cursor-pointer ${selectedFileNames.includes(candidate.fileName) ? 'ring-2 ring-indigo-500 shadow-xl bg-indigo-50/50' : 'hover:shadow-md'} ${index === 0 && !selectedFileNames.includes(candidate.fileName) ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200' : index < 3 && !selectedFileNames.includes(candidate.fileName) ? 'bg-gradient-to-r from-indigo-50/30 to-purple-50/30 border border-indigo-100/30' : !selectedFileNames.includes(candidate.fileName) ? 'bg-white border border-gray-200 hover:bg-slate-50/50' : ''}`}
-            onClick={(e) => handleCandidateClick(candidate, e)}
-          >
-            <div 
-              data-no-detail-click="true"
-              className="absolute top-3 right-3 z-20 p-1"
-              onClick={(e) => e.stopPropagation()}
+    <div className="space-y-4">
+      <AnimatePresence>
+        {sortedCandidates.map((candidate, index) => {
+          const isSelected = selectedFileNames.includes(candidate.fileName);
+          const variant = index === 0 ? 'top' : index === 1 ? 'second' : index === 2 ? 'third' : 'default';
+
+          return (
+            <motion.div
+              key={candidate.fileName}
+              layout
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+              className={cn(cardVariants({ variant, selected: isSelected }))}
+              onClick={(e) => handleCandidateClick(candidate, e)}
             >
-              <Checkbox
-                id={`select-candidate-rank-${candidate.fileName}`}
-                checked={selectedFileNames.includes(candidate.fileName)}
-                onCheckedChange={() => onToggleSelection(candidate.fileName)}
-                aria-label={`Seleccionar ${candidate.name}`}
-                className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-indigo-600 data-[state=checked]:text-white transition-all duration-150 ease-in-out shadow"
-              />
-            </div>
+              <div 
+                data-no-detail-click="true"
+                className="absolute top-3 right-3 z-20 p-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Checkbox
+                  id={`select-candidate-rank-${candidate.fileName}`}
+                  checked={isSelected}
+                  onCheckedChange={() => onToggleSelection(candidate.fileName)}
+                  className="h-6 w-6 rounded-md border-2 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground transition-all shadow"
+                />
+              </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-              <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                {index === 0 ? (
-                  <div className="relative">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-yellow-400 opacity-20"></span>
-                    <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 font-bold shadow-sm">
-                      {index + 1}
-                    </span>
-                    <Star className="h-4 w-4 text-yellow-500 absolute -top-1 -right-2 fill-yellow-400" />
+              <div className="flex items-start gap-4">
+                <RankingIcon rank={index} />
+                <div className="flex-grow">
+                  <div className="flex flex-col sm:flex-row justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-lg text-foreground">{candidate.name}</h3>
+                      <p className="text-sm text-muted-foreground">{candidate.suggestedRole || 'Rol no determinado'}</p>
+                    </div>
+                    <div className="text-left sm:text-right mt-2 sm:mt-0">
+                      <p className="font-extrabold text-2xl text-primary">{Math.round(candidate.score)}%</p>
+                      <p className="text-xs font-medium text-muted-foreground">Compatibilidad</p>
+                    </div>
                   </div>
-                ) : index === 1 ? (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 text-slate-800 font-bold shadow-sm">
-                    {index + 1}
-                  </span>
-                ) : index === 2 ? (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 text-orange-800 font-bold shadow-sm">
-                    {index + 1}
-                  </span>
-                ) : (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 font-medium">
-                    {index + 1}
-                  </span>
-                )}
-                <div>
-                  <span className="font-medium text-gray-900 block text-base sm:text-lg">{candidate.name}</span>
-                  <span className="text-xs text-gray-500">{candidate.experience} años • {candidate.education.split(' ')[0]}</span>
-                </div>
-              </div>
-              <div className="flex flex-col items-start sm:items-end w-full sm:w-auto">
-                <span className={`font-bold text-lg ${index === 0 ? 'text-yellow-600' : 'text-indigo-600'}`}>
-                  {Math.round(candidate.score)}%
-                </span>
-                <span className="block text-sm font-semibold text-indigo-700 mt-0.5">
-                  {candidate.suggestedRole || 'Rol no determinado'}
-                </span>
-                {candidate.seniority && (
-                  <span className="block text-xs text-indigo-500">
-                    {candidate.seniority}
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {candidate.suggestionReasoning && (
-              <div className="mt-2 pt-2 border-t border-slate-200">
-                <p className="text-xs text-slate-600 italic p-2 bg-slate-50 rounded-md border-l-4 border-slate-300">
-                  <span className="flex items-center mb-1">
-                    <Lightbulb className="h-4 w-4 mr-1.5 text-slate-500 flex-shrink-0" />
-                    <strong className='text-slate-700 not-italic font-medium'>Justificación IA:</strong>
-                  </span>
-                  {candidate.suggestionReasoning}
-                </p>
-              </div>
-            )}
-            
-            <div className="relative pt-1 mt-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-indigo-700">Compatibilidad</span>
-              </div>
-              <Progress value={candidate.score} className="h-2 bg-slate-200 [&>div]:bg-gradient-to-r [&>div]:from-indigo-500 [&>div]:to-purple-600" />
-            </div>
 
-            {candidate.matchedSkills && candidate.matchedSkills.length > 0 && (
-              <div className="mt-3">
-                <div className="flex flex-wrap gap-1.5">
-                  {candidate.matchedSkills.slice(0, 4).map((skill, skillIndex) => (
-                    <Badge key={skillIndex} variant="secondary" className="bg-indigo-50 text-indigo-700 text-xs font-normal px-2 py-0.5 hover:bg-indigo-100 transition-all">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {candidate.matchedSkills.length > 4 && (
-                    <Badge variant="outline" className="text-indigo-600 border-indigo-200 text-xs font-normal px-2 py-0.5">
-                      +{candidate.matchedSkills.length - 4}
-                    </Badge>
+                  <div className="relative pt-1 mt-3">
+                    <Progress value={candidate.score} className="h-2" />
+                  </div>
+
+                  {candidate.matchedSkills && candidate.matchedSkills.length > 0 && (
+                    <div className="mt-4">
+                      <div className="flex flex-wrap gap-2">
+                        {candidate.matchedSkills.slice(0, 5).map((skill) => (
+                          <Badge key={skill} variant="secondary">{skill}</Badge>
+                        ))}
+                        {candidate.matchedSkills.length > 5 && (
+                          <Badge variant="outline">+{candidate.matchedSkills.length - 5}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {candidate.suggestionReasoning && (
+                    <div className="mt-4 pt-3 border-t border-border/80">
+                      <p className="text-sm text-muted-foreground italic p-3 bg-accent/50 rounded-md">
+                        <Lightbulb className="h-4 w-4 mr-2 inline-block text-primary/80" />
+                        {candidate.suggestionReasoning}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
 
       {selectedCandidateDetail && (
         <CandidateDetail 
@@ -160,7 +162,7 @@ const CandidateRanking = ({ candidates, selectedFileNames, onToggleSelection }: 
           onClose={handleCloseDetail} 
         />
       )}
-    </Card>
+    </div>
   );
 };
 
